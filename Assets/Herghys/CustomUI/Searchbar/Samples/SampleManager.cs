@@ -15,8 +15,8 @@ namespace Herghys.Utility.Searchbar.Samples
         void Start()
         {
             var raw = TextAsset.text;
-            var chapters = JsonUtility.FromJson<List<ChapterData>>(raw);
-            foreach (var chapter in chapters)
+            var jsonData = JsonUtility.FromJson<JSONData>(raw);
+            foreach (var chapter in jsonData.data)
             {
                 AddToChapterData(chapter.chapter, chapter.subchapter);
             }
@@ -45,5 +45,11 @@ namespace Herghys.Utility.Searchbar.Samples
     {
         public string chapter;
         public string subchapter;
+    }
+
+    [Serializable]
+    internal class JSONData
+    {
+        public List<ChapterData> data = new();
     }
 }

@@ -1123,7 +1123,7 @@ GameObject:
   - component: {fileID: 7620543590662102748}
   - component: {fileID: 7620543590662102747}
   m_Layer: 5
-  m_Name: Searchbar Old
+  m_Name: Searchbar Deprecated
   m_TagString: SearchBar
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

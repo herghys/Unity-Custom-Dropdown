@@ -1,0 +1,23 @@
+{
+    "name": "com.herghys.searchbarui",
+    "displayName": "Search Bar UI",
+    "version": "1.1.0",
+    "unity": "2020.1",
+    "unityRelease": "0a10",
+    "description": "Custom Searchbar UI for Runtime",
+    "keywords": [
+      "Searchbar",
+      "UI",
+      "TMP"
+    ],
+    "category": "UI Plugin",
+    "dependencies": {
+      "com.unity.ugui": "1.0.0",
+      "com.unity.textmeshpro": "3.0.6"
+    },
+    "repository": {
+      "url": "https://github.com/herghys/Unity-Searchbar-UI.git",
+      "type": "git"
+    }
+  }
+  

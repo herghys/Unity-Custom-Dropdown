@@ -7,11 +7,13 @@ namespace Herghys.Utility.Searchbar.Editors
 {
     [CustomEditor(typeof(SearchbarItem), editorForChildClasses: true)]
     [CanEditMultipleObjects]
-    public class SearchbarItemEditor : SelectableEditor
-    {
+    public class SearchbarItemEditor : Editor
+        {
         SerializedProperty m_toggleSelectionMode; //A reference to selection mode flag
         SerializedProperty m_toggle; //A Reference to Toggle
+        SerializedProperty m_selectAllToggle; //A Reference to Toggle
         SerializedProperty m_contentText; //A Reference to TextMeshProUGUI
+        SerializedProperty m_totalSubItemSelectedSuffix; //A Reference to TextMeshProUGUI
 
         SerializedProperty m_hasChildItem; //boolean
         SerializedProperty m_childItemTemplate; //A Script Reference, show if m_hasChildItem == true
@@ -20,13 +22,14 @@ namespace Herghys.Utility.Searchbar.Editors
         SerializedProperty m_itemType; //Toggle Group
         SerializedProperty m_checkMark; //Toggle Group
 
-        protected override void OnEnable()
+        protected virtual void OnEnable()
         {
-            base.OnEnable();
             m_toggleSelectionMode = serializedObject.FindProperty("m_toggleSelectionMode");
             m_toggle = serializedObject.FindProperty("m_toggle");
+            m_selectAllToggle = serializedObject.FindProperty("m_SelectAllToggle");
             m_itemType = serializedObject.FindProperty("m_itemType");
             m_checkMark = serializedObject.FindProperty("m_checkMark");
+            m_totalSubItemSelectedSuffix = serializedObject.FindProperty("m_TotalSubItemSelectedSuffix");
             m_contentText = serializedObject.FindProperty("m_contentText");
 
             m_hasChildItem = serializedObject.FindProperty("m_hasChildItem");
@@ -61,19 +64,21 @@ namespace Herghys.Utility.Searchbar.Editors
             m_toggleSelectionMode.intValue = toggleSelectionValue;
 
             EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(m_toggle, new GUIContent("Toggle"));
+            EditorGUILayout.PropertyField(m_toggle, new GUIContent("Item Selection Toggle"));
             EditorGUILayout.PropertyField(m_contentText, new GUIContent("Content Caption"));
             EditorGUILayout.PropertyField(m_checkMark, new GUIContent("Checkmark Reference"));
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Parent Check", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Parent Check (Is this item a child of another item?)", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(m_hasAnotherItemAsParent, new GUIContent("Has Another Item as parent?"));
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Child Check", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Child Check (Is this item a parent of another item?)", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(m_hasChildItem, new GUIContent("Has Child?"));
             if (m_hasChildItem.boolValue)
             {
+                EditorGUILayout.PropertyField(m_selectAllToggle, new GUIContent("Select All Sub Item Toggle"));
+                EditorGUILayout.PropertyField(m_totalSubItemSelectedSuffix, new GUIContent("Selected Sub Items Suffix"));
                 EditorGUILayout.PropertyField(m_childItemTemplate, new GUIContent("Child Item Template"));
                 EditorGUILayout.PropertyField(m_SpawnedChildsContainer, new GUIContent("Spawned Children Container"));
             }

@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+
+using UnityEngine;
 
 namespace Herghys.Utility.Searchbar
 {
@@ -79,5 +82,8 @@ namespace Herghys.Utility.Searchbar
         {
             return item => item.IsSelected;
         }
+
+        internal static bool IsFullyActive(this GameObject source)
+            => source.activeSelf && source.activeInHierarchy;
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 using TMPro;
@@ -12,7 +13,7 @@ using UnityEngine.UI;
 
 namespace Herghys.Utility.Searchbar
 {
-    public class SearchbarItem : Selectable, IPointerClickHandler, IPointerEnterHandler, ISubmitHandler
+    public class SearchbarItem : MonoBehaviour
     {
         //UI
         [SerializeField, HideInInspector] Toggle m_toggle;
@@ -31,15 +32,22 @@ namespace Herghys.Utility.Searchbar
         [SerializeField, HideInInspector] ToggleSelectionMode m_toggleSelectionMode;
         [SerializeField, HideInInspector] ItemType m_itemType;
 
+        //Additional Toggle
+        [SerializeField, HideInInspector] Toggle m_SelectAllToggle;
+        [SerializeField, HideInInspector] string m_TotalSubItemSelectedSuffix = "Selected";
+
         private List<SearchbarItem> m_spawnedChilds;
         private SearchbarItem m_parent;
         private Searchbar m_searchbar;
         private bool m_isSelected;
+        private StringBuilder m_contentTextBuilder = new();
+
 
         #region Properties
         public int Index { get; private set; } = 0;
         public Guid Guid { get; private set; } = new();
         public Toggle Toggle => m_toggle;
+        public Toggle SelectAllToggle => m_SelectAllToggle;
         public bool IsAParentObject => m_hasChildItem && ItemType.HasFlag(ItemType.Parent);
         public bool IsAChildObject => m_hasAnotherItemAsParent && ItemType.HasFlag(ItemType.Child);
         public ToggleSelectionMode SelectionMode => m_toggleSelectionMode;
@@ -161,6 +169,9 @@ namespace Herghys.Utility.Searchbar
             if (m_toggleChildCoroutine != null)
                 StopCoroutine(m_toggleChildCoroutine);
 
+            if (!gameObject.IsFullyActive())
+                return;
+
             m_toggleChildCoroutine = StartCoroutine(ToggleChildUIRoutine(value));
         }
 
@@ -181,6 +192,7 @@ namespace Herghys.Utility.Searchbar
             yield return m_searchbar.ResizeScrollRect();
         }
 
+
         /// <summary>
         /// [Parent Only]
         /// Toggle Check Mark and Toggle On/Off
@@ -190,12 +202,23 @@ namespace Herghys.Utility.Searchbar
         {
             if (IsAParentObject)
             {
+                m_contentTextBuilder.Clear();
                 var selectedChilds = m_spawnedChilds.Where(child => child.IsSelected);
                 var isAnyChildOn = selectedChilds != null && selectedChilds.Count() > 0;
+                var allChildIsOn = selectedChilds != null && selectedChilds.Count() == m_spawnedChilds.Count;
+
+                m_contentTextBuilder.Append(Key);
+
+                if (isAnyChildOn)
+                {
+                    m_contentTextBuilder.Append(" ").Append($"({selectedChilds.Count()} {m_TotalSubItemSelectedSuffix})");
+                }
+
+                m_SelectAllToggle.SetIsOnWithoutNotify(allChildIsOn);
+
+
+                m_contentText.text = m_contentTextBuilder.ToString();
                 ToggleSelection(isAnyChildOn);
-                //m_isSelected = isAnyChildOn;
-                m_checkMark.gameObject.SetActive(isAnyChildOn);
-                //m_toggle.isOn = isAnyChildOn;
             }
         }
 
@@ -217,19 +240,23 @@ namespace Herghys.Utility.Searchbar
             }
         }
 
+        #region Event Listeners
         /// <summary>
-        /// Handler for Drag
+        /// Toggle All Childs
         /// </summary>
-        private void InternalSearchItem()
+        /// <param name="enabled"></param>
+        public void OnSelectAllChilds(bool enabled)
         {
-            if (!IsActive() || !IsInteractable())
+            if (!IsAParentObject)
                 return;
 
-            IsOn = !IsOn;
-            OnItemSelected(IsOn);
+            foreach (var child in m_spawnedChilds)
+            {
+                child.ToggleSelection(enabled, true);
+            }
+            ToggleGraphicObject(enabled);
         }
 
-        #region Event Listeners
         /// <summary>
         /// On Item Selected
         /// </summary>
@@ -254,56 +281,6 @@ namespace Herghys.Utility.Searchbar
                 }
 
                 m_searchbar.OnSearchItemSelected();
-            }
-        }
-
-        /// <summary>
-        /// On Hover
-        /// </summary>
-        /// <param name="eventData"></param>
-        public override void OnPointerEnter(PointerEventData eventData)
-        {
-
-            if (ItemType == ItemType.Parent)
-            {
-                base.OnPointerEnter(eventData);
-                EventSystem.current.SetSelectedGameObject(gameObject, eventData);
-            }
-        }
-
-        /// <summary>
-        /// On Pointer Select
-        /// </summary>
-        /// <param name="eventData"></param>
-        public override void OnSelect(BaseEventData eventData)
-        {
-            base.OnSelect(eventData);
-        }
-
-        /// <summary>
-        /// On Pointer Click
-        /// </summary>
-        /// <param name="eventData"></param>
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            if (ItemType == ItemType.Parent)
-            {
-                if (eventData.button != PointerEventData.InputButton.Left)
-                    return;
-
-                InternalSearchItem();
-            }
-        }
-
-        /// <summary>
-        /// On Pointer Submit
-        /// </summary>
-        /// <param name="eventData"></param>
-        public void OnSubmit(BaseEventData eventData)
-        {
-            if (ItemType == ItemType.Parent)
-            {
-                InternalSearchItem();
             }
         }
 

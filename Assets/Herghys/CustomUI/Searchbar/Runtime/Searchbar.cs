@@ -32,6 +32,7 @@ namespace Herghys.Utility.Searchbar
 
         [Header("Captions")]
         [SerializeField] private string m_defaultCaption = "No Items Selected";
+        [SerializeField] private string m_allSelectedCaption = "All Items Selected";
 
         [Header("Item Template")]
         [SerializeField] ToggleGroup m_toggleGroup;
@@ -64,7 +65,7 @@ namespace Herghys.Utility.Searchbar
             get
             {
                 if (SelectedItems == null)
-                    return default;
+                    return null;
 
                 return SelectedItems.Select(x => x.Key.ToString());
             }
@@ -74,7 +75,7 @@ namespace Herghys.Utility.Searchbar
             get
             {
                 if (SelectedParents == null)
-                    return default;
+                    return null;
 
                 return SelectedParents.Select(x => x.Key.ToString());
             }
@@ -84,7 +85,7 @@ namespace Herghys.Utility.Searchbar
             get
             {
                 if (SelectedChildren == null)
-                    return default;
+                    return null;
                 return SelectedChildren.Select(x => x.Key.ToString());
             }
         }
@@ -203,6 +204,10 @@ namespace Herghys.Utility.Searchbar
 
             if (m_filterRoutine != null)
                 StopCoroutine(m_filterRoutine);
+
+            if (!gameObject.IsFullyActive())
+                return;
+
             m_filterRoutine = StartCoroutine(FilterItems(checkEmpty = false));
         }
 
@@ -211,8 +216,11 @@ namespace Herghys.Utility.Searchbar
         /// </summary>
         public void HideFilterList()
         {
+            m_inputField.text = string.Empty;
+
             m_searchBarScroll.gameObject.SetActive(false);
             m_cancelButton.gameObject.SetActive(false);
+
             //m_applyPanel.SetActive(false);
         }
 
@@ -261,6 +269,20 @@ namespace Herghys.Utility.Searchbar
 
         #region UI Utility
         /// <summary>
+        /// Modify Default Caption (Non Selected Items)
+        /// </summary>
+        /// <param name="caption"></param>
+        public void ModifyDefaultCaption(string caption)
+            => m_defaultCaption = caption;
+
+        /// <summary>
+        /// Modify All Selected Items Caption
+        /// </summary>
+        /// <param name="caption"></param>
+        public void ModifyAllSelectedCaption(string caption)
+            => m_allSelectedCaption = caption;
+
+        /// <summary>
         /// Clear Filters
         /// </summary>
         /// <param name="autoClose">Check wether you need to auto close the filtered list</param>
@@ -268,6 +290,9 @@ namespace Herghys.Utility.Searchbar
         {
             if (m_clearCoroutine != null)
                 StopCoroutine(m_clearCoroutine);
+
+            if (!gameObject.IsFullyActive())
+                return;
 
             m_clearCoroutine = StartCoroutine(IE_ClearFilters(autoClose));
         }
@@ -279,12 +304,15 @@ namespace Herghys.Utility.Searchbar
         /// <returns></returns>
         IEnumerator IE_ClearFilters(bool autoClose)
         {
-            if (SelectedItems != null)
+            if (SpawnedSearchBarItems != null)
             {
-                foreach (var item in SelectedItems)
+                foreach (var item in SpawnedSearchBarItems.Values)
                 {
                     item.ToggleSelection(false, true);
-                    item.Unfold();
+
+                    if (item.IsParentObjectType())
+                        item.Unfold();
+
                     yield return ResizeScrollRect();
                 }
             }
@@ -301,6 +329,7 @@ namespace Herghys.Utility.Searchbar
                 m_searchBarScroll.gameObject.SetActive(false);
             }
 
+            EventSystem.current.SetSelectedGameObject(gameObject);
             BuildPlaceholder();
         }
         /// <summary>
@@ -311,6 +340,9 @@ namespace Herghys.Utility.Searchbar
         {
             if (m_captionRoutine != null)
                 StopCoroutine(m_captionRoutine);
+
+            if (!gameObject.IsFullyActive())
+                return;
 
             m_captionRoutine = StartCoroutine(IE_BuildPlaceholder(initial));
         }
@@ -347,6 +379,11 @@ namespace Herghys.Utility.Searchbar
         private void BuildPlaceholderCaption()
         {
             m_captionBuilder.Clear();
+            if (SelectedItems.Count() == SpawnedSearchBarItems.Count)
+            {
+                m_captionBuilder.Append(m_allSelectedCaption);
+                return;
+            }
             for (int i = 0; i < SelectedParents.Count(); i++)
             {
                 var item = SelectedParents.ElementAt(i);
@@ -394,6 +431,9 @@ namespace Herghys.Utility.Searchbar
         {
             if (m_resizeRoutine != null)
                 StopCoroutine(m_resizeRoutine);
+
+            if (!gameObject.IsFullyActive())
+                return;
 
             m_resizeRoutine = StartCoroutine(ResizeScrollRect());
         }
