@@ -7,6 +7,7 @@ using System.Text;
 using TMPro;
 
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -31,6 +32,7 @@ namespace Herghys.Utility.Searchbar
         [SerializeField] private Button m_cancelButton;
 
         [Header("Captions")]
+        [SerializeField] private bool includeSubItemsIfAllSelected;
         [SerializeField] private string m_defaultCaption = "No Items Selected";
         [SerializeField] private string m_allSelectedCaption = "All Items Selected";
 
@@ -90,6 +92,8 @@ namespace Herghys.Utility.Searchbar
             }
         }
         #endregion
+
+        public UnityEvent OnFiltersCleared = new();
 
         #region Unity
         protected override void OnEnable()
@@ -258,10 +262,13 @@ namespace Herghys.Utility.Searchbar
         /// </summary>
         public void OnSearchItemSelected()
         {
-            SelectedItems = SpawnedSearchBarItems.Values.GetFilteredItemsByCondition(item => item.IsSelected);
-            SelectedParents = SelectedItems.GetFilteredItemsByCondition(SearchbarExtension.IsParentObjectType());
-            SelectedChildren = SelectedItems.GetFilteredItemsByCondition(SearchbarExtension.IsChildObjectType());
+            if (SpawnedSearchBarItems != null)
+            {
 
+                SelectedItems = SpawnedSearchBarItems.Values.GetFilteredItemsByCondition(item => item.IsSelected);
+                SelectedParents = SelectedItems.GetFilteredItemsByCondition(SearchbarExtension.IsParentObjectType());
+                SelectedChildren = SelectedItems.GetFilteredItemsByCondition(SearchbarExtension.IsChildObjectType());
+            }
             StartResizeScrollRect();
             BuildPlaceholder();
         }
@@ -331,6 +338,8 @@ namespace Herghys.Utility.Searchbar
 
             EventSystem.current.SetSelectedGameObject(gameObject);
             BuildPlaceholder();
+
+            OnFiltersCleared?.Invoke();
         }
         /// <summary>
         /// Build placeholder
@@ -388,7 +397,18 @@ namespace Herghys.Utility.Searchbar
             {
                 var item = SelectedParents.ElementAt(i);
                 var value = item.Key.ToString();
-                m_captionBuilder.Append(value).Append(": ");
+                m_captionBuilder.Append(value);
+
+                var isAllSelected = item.IsAllChildrenSelected;
+
+                if (isAllSelected && !includeSubItemsIfAllSelected)
+                {
+                    if (i < SelectedParents.Count() - 1)
+                        m_captionBuilder.Append(", ");
+                    continue;
+                }
+
+                m_captionBuilder.Append(": ");
 
                 var selectedChildren = item.SelectedChildren;
                 if (selectedChildren is null || selectedChildren.Count() < 1)

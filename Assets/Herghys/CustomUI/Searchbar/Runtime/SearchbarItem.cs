@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Herghys.CustomUI.Searchbar.Runtime;
+
 using TMPro;
 
 using UnityEngine;
@@ -36,6 +38,17 @@ namespace Herghys.Utility.Searchbar
         [SerializeField, HideInInspector] Toggle m_SelectAllToggle;
         [SerializeField, HideInInspector] string m_TotalSubItemSelectedSuffix = "Selected";
 
+        //Graphics
+        //Parent Accordion indicator
+        [SerializeField, HideInInspector] bool m_showAccordionIndicator;
+        [SerializeField, HideInInspector] Image m_dropdownAccordionIndicator;
+        [SerializeField, HideInInspector] OpenCloseSpriteState m_accordionSpriteState;
+
+        //Background
+        [SerializeField, HideInInspector] bool m_changeGraphicsOnSelected;
+        [SerializeField, HideInInspector] Image m_imageToChangeOnSelect;
+        [SerializeField, HideInInspector] SearchbarSelectedBackground m_selectionGraphicBlock;
+
         private List<SearchbarItem> m_spawnedChilds;
         private SearchbarItem m_parent;
         private Searchbar m_searchbar;
@@ -64,6 +77,7 @@ namespace Herghys.Utility.Searchbar
             }
         }
 
+        public bool IsAllChildrenSelected;
         public bool IsOn { get; private set; }
 
         //Data
@@ -192,6 +206,15 @@ namespace Herghys.Utility.Searchbar
             yield return m_searchbar.ResizeScrollRect();
         }
 
+        private void ToggleChevronIndicator(bool enabled)
+        {
+            m_dropdownAccordionIndicator.sprite = enabled ? m_accordionSpriteState.OpenedSprite : m_accordionSpriteState.ClosedSprite;
+        }
+
+        private void ChangeBackgroundGraphic(bool enabled)
+        {
+            m_imageToChangeOnSelect.color = enabled ? m_selectionGraphicBlock.SelectedSprite : m_selectionGraphicBlock.NormlaSprite;
+        }
 
         /// <summary>
         /// [Parent Only]
@@ -206,6 +229,8 @@ namespace Herghys.Utility.Searchbar
                 var selectedChilds = m_spawnedChilds.Where(child => child.IsSelected);
                 var isAnyChildOn = selectedChilds != null && selectedChilds.Count() > 0;
                 var allChildIsOn = selectedChilds != null && selectedChilds.Count() == m_spawnedChilds.Count;
+
+                this.IsAllChildrenSelected = allChildIsOn;
 
                 m_contentTextBuilder.Append(Key);
 
@@ -266,12 +291,21 @@ namespace Herghys.Utility.Searchbar
             if (SelectionMode == (ToggleSelectionMode.ShowChild))
             {
                 ToggleChildUI(enabled);
+                if (m_showAccordionIndicator)
+                {
+                    ToggleChevronIndicator(enabled);
+                }
             }
 
             if (SelectionMode == (ToggleSelectionMode.SelectItem))
             {
                 if (m_toggle is null)
                     return;
+
+                if (m_changeGraphicsOnSelected)
+                {
+                    ChangeBackgroundGraphic(enabled);
+                }
 
                 ToggleSelection(enabled);
                 //m_isSelected = enabled;

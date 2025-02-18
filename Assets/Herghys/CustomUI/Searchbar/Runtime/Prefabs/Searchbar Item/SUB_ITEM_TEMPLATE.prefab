@@ -97,6 +97,17 @@ MonoBehaviour:
   m_itemType: 2
   m_SelectAllToggle: {fileID: 0}
   m_TotalSubItemSelectedSuffix: Selected
+  m_showAccordionIndicator: 0
+  m_dropdownAccordionIndicator: {fileID: 0}
+  m_accordionSpriteState:
+    m_openedSprite: {fileID: 0}
+    m_closedSprite: {fileID: 0}
+  m_changeGraphicsOnSelected: 1
+  m_imageToChangeOnSelect: {fileID: 222081282313243933}
+  m_selectionGraphicBlock:
+    m_normalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_selectedColor: {r: 0.14346743, g: 0.7238962, b: 0.9811321, a: 1}
+  m_includeSubItemsifSelectedAll: 0
 --- !u!1 &222081281692913943
 GameObject:
   m_ObjectHideFlags: 0
@@ -210,10 +221,10 @@ RectTransform:
   m_Father: {fileID: 222081280891241569}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 242.05486, y: -15}
-  m_SizeDelta: {x: 484.1097, y: 30}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &222081282313243935
 MonoBehaviour:
