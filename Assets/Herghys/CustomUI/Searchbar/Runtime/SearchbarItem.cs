@@ -51,7 +51,7 @@ namespace Herghys.Utility.Searchbar
         [SerializeField, HideInInspector] Image m_imageToChangeOnSelect;
         [SerializeField, HideInInspector] SearchbarSelectedBackground m_selectionGraphicBlock;
 
-        private List<SearchbarItem> m_spawnedChilds;
+        private List<SearchbarItem> m_spawnedChilds = new();
         private SearchbarItem m_parent;
         private Searchbar m_searchbar;
         private bool m_isSelected;
@@ -214,6 +214,11 @@ namespace Herghys.Utility.Searchbar
         /// <returns></returns>
         private IEnumerator ToggleChildUIRoutine(bool value)
         {
+            if (m_spawnedChilds is null || m_spawnedChilds.Count == 0)
+            {
+                yield return m_searchbar.ResizeScrollRect();
+                yield break;
+            }
             foreach (var child in m_spawnedChilds)
             {
                 m_searchbar.MarkContentContainerToRebuild();
