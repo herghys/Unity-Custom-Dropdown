@@ -17,6 +17,8 @@ namespace Herghys.Utility.Searchbar
 {
     public class SearchbarItem : MonoBehaviour
     {
+        [SerializeField] ToggleGroup m_ToggleGroupInParent;
+
         //UI
         [SerializeField, HideInInspector] Toggle m_toggle;
         [SerializeField, HideInInspector] TextMeshProUGUI m_contentText;
@@ -105,7 +107,7 @@ namespace Herghys.Utility.Searchbar
         /// <param name="parent"></param>
         /// <param name="value"></param>
         /// <exception cref="System.Exception"></exception>
-        public void Setup(object key, Searchbar searchbar, ToggleGroup toggleGroup, int index, bool alreadyExist = false, SearchbarItem parent = null, IEnumerable<object> value = default)
+        public void Setup(object key, Searchbar searchbar, int index, bool alreadyExist = false, SearchbarItem parent = null, IEnumerable<object> value = default)
         {
             if (IsAChildObject)
             {
@@ -113,7 +115,7 @@ namespace Herghys.Utility.Searchbar
                 {
                     throw new System.Exception("Please set reference to a parent");
                 }
-
+                
                 this.m_parent = parent;
             }
 
@@ -137,8 +139,17 @@ namespace Herghys.Utility.Searchbar
             {
                 m_spawnedChilds = new();
                 Value = value;
-                SetupChild(searchbar, toggleGroup);
-
+                
+                if (searchbar.ChildSelectionType == Searchbar.SelectionType.Single && m_toggleSelectionMode == ToggleSelectionMode.SelectItem)
+                {
+                    m_ToggleGroupInParent.allowSwitchOff = true;
+                }
+                else
+                {
+                    SetupChild(searchbar);
+                    
+                }
+                
                 m_SpawnedChildsContainer.gameObject.SetActive(false);
             }
 
@@ -154,7 +165,7 @@ namespace Herghys.Utility.Searchbar
         /// <summary>
         /// Setup child objects
         /// </summary>
-        private void SetupChild(Searchbar searchbar, ToggleGroup toggleGroup, IEnumerable<object> childValues = default)
+        private void SetupChild(Searchbar searchbar, IEnumerable<object> childValues = default)
         {
             if (IsAParentObject)
             {
@@ -166,8 +177,15 @@ namespace Herghys.Utility.Searchbar
                 foreach (var value in Value)
                 {
                     var item = Instantiate(m_childItemTemplate, m_SpawnedChildsContainer);
-                    item.Setup(value, searchbar, toggleGroup, index, alreadyExist: false, this, childValues);
+                    item.Setup(value, searchbar, index, alreadyExist: false, this, childValues);
                     m_spawnedChilds.Add(item);
+                    
+                    if (searchbar.ChildSelectionType == Searchbar.SelectionType.Single)
+                    {
+                        item.Toggle.group = m_ToggleGroupInParent;
+                        m_ToggleGroupInParent.RegisterToggle(item.Toggle);
+                        item.Toggle.isOn = false;
+                    }
                     index++;
                 }
             }
@@ -225,25 +243,35 @@ namespace Herghys.Utility.Searchbar
         {
             if (IsAParentObject)
             {
-                m_contentTextBuilder.Clear();
-                var selectedChilds = m_spawnedChilds.Where(child => child.IsSelected);
-                var isAnyChildOn = selectedChilds != null && selectedChilds.Count() > 0;
-                var allChildIsOn = selectedChilds != null && selectedChilds.Count() == m_spawnedChilds.Count;
-
-                this.IsAllChildrenSelected = allChildIsOn;
-
-                m_contentTextBuilder.Append(Key);
-
-                if (isAnyChildOn)
+                if (m_toggleSelectionMode == ToggleSelectionMode.ShowChild)
                 {
-                    m_contentTextBuilder.Append(" ").Append($"({selectedChilds.Count()} {m_TotalSubItemSelectedSuffix})");
+                    m_contentTextBuilder.Clear();
+                    var selectedChilds = m_spawnedChilds.Where(child => child.IsSelected);
+                    var isAnyChildOn = selectedChilds != null && selectedChilds.Count() > 0;
+                    var allChildIsOn = selectedChilds != null && selectedChilds.Count() == m_spawnedChilds.Count;
+
+                    this.IsAllChildrenSelected = allChildIsOn;
+
+                    m_contentTextBuilder.Append(Key);
+
+                    if (isAnyChildOn)
+                    {
+                        m_contentTextBuilder.Append(" ")
+                            .Append($"({selectedChilds.Count()} {m_TotalSubItemSelectedSuffix})");
+                    }
+
+                    m_SelectAllToggle.SetIsOnWithoutNotify(allChildIsOn);
+
+
+                    m_contentText.text = m_contentTextBuilder.ToString();
+
+                    ToggleSelection(isAnyChildOn);
                 }
-
-                m_SelectAllToggle.SetIsOnWithoutNotify(allChildIsOn);
-
-
-                m_contentText.text = m_contentTextBuilder.ToString();
-                ToggleSelection(isAnyChildOn);
+                else
+                {
+                    m_checkMark.gameObject.SetActive(enabled);   
+                    //m_toggle.SetIsOnWithoutNotify(enabled);
+                }
             }
         }
 
@@ -309,9 +337,13 @@ namespace Herghys.Utility.Searchbar
 
                 ToggleSelection(enabled);
                 //m_isSelected = enabled;
-                if (m_parent != null)
+                if (m_parent != null && ItemType == ItemType.Child)
                 {
                     m_parent.ToggleGraphicObject(enabled);
+                }
+                else if (ItemType == ItemType.Parent)
+                {
+                    ToggleGraphicObject(enabled);
                 }
 
                 m_searchbar.OnSearchItemSelected();

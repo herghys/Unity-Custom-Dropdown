@@ -140,11 +140,11 @@ namespace Herghys.Utility.Searchbar.Editors
             {
                 AccordionChecker();
             }
-
-            if (enumValue.HasFlag(ToggleSelectionMode.SelectItem))
-            {
-                CheckGraphics();
-            }
+            
+            CheckGraphics();
+            // if (enumValue.HasFlag(ToggleSelectionMode.SelectItem))
+            // {
+            // }
         }
 
         private void BaseProperty()

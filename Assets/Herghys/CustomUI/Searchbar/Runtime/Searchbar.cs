@@ -3,9 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+using Herghys.CustomUI.Searchbar.Runtime;
 using TMPro;
-
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -14,34 +13,39 @@ using UnityEngine.UI;
 namespace Herghys.Utility.Searchbar
 {
     [RequireComponent(typeof(ToggleGroup))]
-
     public class Searchbar : Selectable
     {
         [Header("Inputs")]
         [SerializeField] private TMP_InputField m_inputField;
+        [SerializeField] private Toggle m_inputToggle;
         [SerializeField] private TextMeshProUGUI m_Placeholder;
+        [SerializeField] private TextMeshProUGUI m_inputToggleText;
 
-        [Header("UI Reference")]
-        [SerializeField] private ScrollRect m_searchBarScroll;
+        [Header("UI Reference")] [SerializeField]
+        private ScrollRect m_searchBarScroll;
+
         [SerializeField] private Transform m_searchBarScrollContentHolder;
         [SerializeField] private float m_maxScrollHeight = 200;
+
         [SerializeField] private VerticalLayoutGroup m_contentVerticalLayoutGroup;
+
         //[SerializeField] private GameObject m_applyPanel;
         [SerializeField] private RectTransform m_searchContentRectTransform;
         [SerializeField] private RectTransform m_searchScrollRectTransform;
         [SerializeField] private Button m_cancelButton;
 
-        [Header("Captions")]
-        [SerializeField] private bool includeSubItemsIfAllSelected;
+        [Header("Captions")] [SerializeField] private bool includeSubItemsIfAllSelected;
         [SerializeField] private string m_defaultCaption = "No Items Selected";
         [SerializeField] private string m_allSelectedCaption = "All Items Selected";
 
         [Header("Item Template")]
-        [SerializeField] ToggleGroup m_toggleGroup;
+        [SerializeField] private SelectionType m_childSelectionType;
+        [SerializeField] private SelectionType m_parentSelectionType;
+
+        [SerializeField] private ToggleGroup m_parentToggleGroup;
         [SerializeField] private SearchbarItem m_itemTemplate;
 
-        [Header("Misc")]
-        [SerializeField] float m_ScrollListTweenTime = 1f;
+        [Header("Misc")] [SerializeField] float m_ScrollListTweenTime = 1f;
 
         private Coroutine m_filterRoutine;
         private Coroutine m_captionRoutine;
@@ -54,7 +58,9 @@ namespace Herghys.Utility.Searchbar
         public static int ParentLimit { get; internal set; } = int.MaxValue;
 
         #region Properties
-        public ToggleGroup ToggleGroup => m_toggleGroup;
+        
+        public SelectionType ChildSelectionType => m_childSelectionType;
+        public SelectionType ParentSelectionType => m_parentSelectionType;
         public Dictionary<Guid, SearchbarItem> SpawnedSearchBarItems { get; private set; } = new();
         public string InputValue { get; private set; }
         public bool IsInputEmpty => string.IsNullOrEmpty(InputValue);
@@ -72,6 +78,7 @@ namespace Herghys.Utility.Searchbar
                 return SelectedItems.Select(x => x.Key.ToString());
             }
         }
+
         public IEnumerable<string> SelectedParentsValue
         {
             get
@@ -82,6 +89,7 @@ namespace Herghys.Utility.Searchbar
                 return SelectedParents.Select(x => x.Key.ToString());
             }
         }
+
         public IEnumerable<string> SelectedChildrenValue
         {
             get
@@ -91,26 +99,34 @@ namespace Herghys.Utility.Searchbar
                 return SelectedChildren.Select(x => x.Key.ToString());
             }
         }
+
         #endregion
 
         public UnityEvent OnFiltersCleared = new();
 
         #region Unity
+
         protected override void OnEnable()
         {
             base.OnEnable();
+            m_searchBarScroll.gameObject.SetActive(false);
+            m_inputToggle.onValueChanged.AddListener(OnSelected);
             m_inputField.onValueChanged.AddListener(OnInputValueChanged);
             m_inputField.onEndEdit.AddListener(OnInputValueEndEdit);
             m_inputField.onSelect.AddListener(OnSelected);
         }
+
         protected override void OnDisable()
         {
             base.OnDisable();
+            m_inputToggle.onValueChanged.RemoveListener(OnSelected);
             m_inputField.onValueChanged.RemoveListener(OnInputValueChanged);
             m_inputField.onEndEdit.RemoveListener(OnInputValueEndEdit);
             m_inputField.onSelect.RemoveListener(OnSelected);
         }
+
         #endregion
+
         /// <summary>
         /// Initialize by Dictionary
         /// </summary>
@@ -155,10 +171,21 @@ namespace Herghys.Utility.Searchbar
         private void SpawnItems<K>(Dictionary<K, IEnumerable<object>> contents)
         {
             var index = 0;
+            if (ParentSelectionType == SelectionType.Single)
+            {
+                m_parentToggleGroup.allowSwitchOff = true;
+            }
             foreach (var content in contents)
             {
                 var item = Instantiate(m_itemTemplate, m_searchBarScrollContentHolder);
-                item.Setup(content.Key, this, m_toggleGroup, index, false, value: content.Value);
+                item.Setup(content.Key, this, index, false, value: content.Value);
+                
+                if (ParentSelectionType == SelectionType.Single)
+                {
+                    item.Toggle.group = m_parentToggleGroup;
+                    m_parentToggleGroup.RegisterToggle(item.Toggle);
+                    item.Toggle.isOn = false;
+                }
                 index++;
             }
         }
@@ -185,6 +212,7 @@ namespace Herghys.Utility.Searchbar
                 var limit = SpawnedSearchBarItems.Values.FirstOrDefault(item => item.Key.ToString() == key);
                 limitIndex = limit.Index;
             }
+
             SetViewLimit(limitIndex);
         }
 
@@ -193,11 +221,12 @@ namespace Herghys.Utility.Searchbar
         /// </summary>
         /// <param name="inputValue"></param>
         /// <param name="checkEmpty"></param>
-        void StartFilter(string inputValue = "", bool checkEmpty = true, bool previousValueEqualityCheck = true, bool isInitialCheck = false)
+        void StartFilter(string inputValue = "", bool checkEmpty = true, bool previousValueEqualityCheck = true,
+            bool isInitialCheck = false)
         {
             if (inputValue.Equals(m_previousValue) && previousValueEqualityCheck)
                 return;
-            
+
             m_previousValue = string.IsNullOrEmpty(InputValue) ? string.Empty : InputValue;
             InputValue = string.IsNullOrEmpty(inputValue) ? string.Empty : inputValue;
 
@@ -250,7 +279,8 @@ namespace Herghys.Utility.Searchbar
         /// </summary>
         public async void ClearAndReset()
         {
-            foreach (var item in new List<SearchbarItem>(SpawnedSearchBarItems.Values.Where(SearchbarExtension.IsParentObjectType)))
+            foreach (var item in new List<SearchbarItem>(
+                         SpawnedSearchBarItems.Values.Where(SearchbarExtension.IsParentObjectType)))
             {
                 item.DisposeItem();
                 await System.Threading.Tasks.Task.CompletedTask;
@@ -260,6 +290,7 @@ namespace Herghys.Utility.Searchbar
         }
 
         #region Item Selection
+
         /// <summary>
         /// On SearchItem Selected
         /// </summary>
@@ -267,17 +298,18 @@ namespace Herghys.Utility.Searchbar
         {
             if (SpawnedSearchBarItems != null)
             {
-
                 SelectedItems = SpawnedSearchBarItems.Values.GetFilteredItemsByCondition(item => item.IsSelected);
                 SelectedParents = SelectedItems.GetFilteredItemsByCondition(SearchbarExtension.IsParentObjectType());
                 SelectedChildren = SelectedItems.GetFilteredItemsByCondition(SearchbarExtension.IsChildObjectType());
             }
+
             StartResizeScrollRect();
             BuildPlaceholder();
         }
         #endregion
 
         #region UI Utility
+
         /// <summary>
         /// Modify Default Caption (Non Selected Items)
         /// </summary>
@@ -344,6 +376,7 @@ namespace Herghys.Utility.Searchbar
 
             OnFiltersCleared?.Invoke();
         }
+
         /// <summary>
         /// Build placeholder
         /// </summary>
@@ -358,6 +391,7 @@ namespace Herghys.Utility.Searchbar
 
             m_captionRoutine = StartCoroutine(IE_BuildPlaceholder(initial));
         }
+
         /// <summary>
         /// Build placeholder coroutine
         /// </summary>
@@ -374,8 +408,11 @@ namespace Herghys.Utility.Searchbar
             {
                 BuildPlaceholderCaption();
             }
+
             m_Placeholder.text = m_captionBuilder.ToString().TrimEnd();
+            m_inputToggleText.text = m_captionBuilder.ToString().TrimEnd();
         }
+
         /// <summary>
         /// Set empty placeholder
         /// </summary>
@@ -385,6 +422,7 @@ namespace Herghys.Utility.Searchbar
             m_captionBuilder.Append(m_defaultCaption);
             m_Placeholder.text = m_captionBuilder.ToString().TrimEnd();
         }
+
         /// <summary>
         /// Build placeholder caption
         /// </summary>
@@ -396,6 +434,7 @@ namespace Herghys.Utility.Searchbar
                 m_captionBuilder.Append(m_allSelectedCaption);
                 return;
             }
+
             for (int i = 0; i < SelectedParents.Count(); i++)
             {
                 var item = SelectedParents.ElementAt(i);
@@ -410,12 +449,16 @@ namespace Herghys.Utility.Searchbar
                         m_captionBuilder.Append(", ");
                     continue;
                 }
-
-                m_captionBuilder.Append(": ");
+                
 
                 var selectedChildren = item.SelectedChildren;
                 if (selectedChildren is null || selectedChildren.Count() < 1)
+                {
+                    if (i < SelectedParents.Count() - 1)
+                        m_captionBuilder.Append(", ");  
                     continue;
+                }
+                m_captionBuilder.Append(": ");
 
                 for (int j = 0; j < selectedChildren.Count(); j++)
                 {
@@ -432,6 +475,7 @@ namespace Herghys.Utility.Searchbar
                     m_captionBuilder.Append("; ");
             }
         }
+
         /// <summary>
         /// Mark content container for rebuikd
         /// </summary>
@@ -439,6 +483,7 @@ namespace Herghys.Utility.Searchbar
         {
             LayoutRebuilder.MarkLayoutForRebuild((RectTransform)m_searchBarScrollContentHolder);
         }
+
         /// <summary>
         /// Force rebuild content container
         /// </summary>
@@ -460,6 +505,7 @@ namespace Herghys.Utility.Searchbar
 
             m_resizeRoutine = StartCoroutine(ResizeScrollRect());
         }
+
         /// <summary>
         /// Resize Input Scroll rect to match max height / content size
         /// </summary>
@@ -477,22 +523,27 @@ namespace Herghys.Utility.Searchbar
             }
             else
             {
-                m_searchScrollRectTransform.sizeDelta = new Vector2(m_searchScrollRectTransform.rect.width, m_maxScrollHeight);
+                m_searchScrollRectTransform.sizeDelta =
+                    new Vector2(m_searchScrollRectTransform.rect.width, m_maxScrollHeight);
             }
 
             while (m_searchScrollRectTransform.rect.height < newHeight)
             {
-                m_searchScrollRectTransform.sizeDelta = Vector2.Lerp(a: m_searchContentRectTransform.sizeDelta, b: new Vector2(m_searchScrollRectTransform.rect.width, newHeight), m_ScrollListTweenTime);
+                m_searchScrollRectTransform.sizeDelta = Vector2.Lerp(a: m_searchContentRectTransform.sizeDelta,
+                    b: new Vector2(m_searchScrollRectTransform.rect.width, newHeight), m_ScrollListTweenTime);
                 yield return null;
             }
+
             m_searchScrollRectTransform.sizeDelta = new Vector2(m_searchScrollRectTransform.rect.width, newHeight);
 
             yield return null;
             RebuildContentContainer();
         }
+
         #endregion
 
         #region Filter Utility
+
         /// <summary>
         /// Setup search object
         /// </summary>
@@ -501,6 +552,7 @@ namespace Herghys.Utility.Searchbar
             var filtered = GetFilteredGameObject(gameObject, true, x => !x.name.Contains("Template")).Distinct();
             m_allSearchItems.AddRange(filtered);
         }
+
         /// <summary>
         /// Get filtered game object by condition
         /// </summary>
@@ -514,6 +566,7 @@ namespace Herghys.Utility.Searchbar
             GetChildRecursive(obj, includeMe, ref filtered, condition);
             return filtered;
         }
+
         /// <summary>
         /// Filter items coroutine
         /// </summary>
@@ -547,7 +600,8 @@ namespace Herghys.Utility.Searchbar
             //Remove Parents That Exceed View Limit
             IEnumerator RemoveAllParentsExceedingViewLimit()
             {
-                var parents = SpawnedSearchBarItems.Values.GetFilteredItemsByCondition(SearchbarExtension.IsParentObjectType);
+                var parents =
+                    SpawnedSearchBarItems.Values.GetFilteredItemsByCondition(SearchbarExtension.IsParentObjectType);
 
                 foreach (var parent in parents)
                 {
@@ -555,7 +609,8 @@ namespace Herghys.Utility.Searchbar
                     {
                         MarkContentContainerToRebuild();
                         parent.ToggleSelectionFromFilter(false);
-                    } 
+                    }
+
                     yield return null;
                     yield return ResizeScrollRect();
                 }
@@ -596,6 +651,7 @@ namespace Herghys.Utility.Searchbar
                         MarkContentContainerToRebuild();
                         item.ToggleSelectionFromFilter(true);
                     }
+
                     yield return null;
                     yield return ResizeScrollRect();
                 }
@@ -607,6 +663,7 @@ namespace Herghys.Utility.Searchbar
             yield return ResizeScrollRect();
             RebuildContentContainer();
         }
+
         /// <summary>
         /// Filter by input
         /// </summary>
@@ -615,7 +672,8 @@ namespace Herghys.Utility.Searchbar
         {
             if (IsInputEmpty)
             {
-                return this.SpawnedSearchBarItems.Values.GetFilteredItemsByCondition(SearchbarExtension.IsParentObjectType());
+                return this.SpawnedSearchBarItems.Values.GetFilteredItemsByCondition(SearchbarExtension
+                    .IsParentObjectType());
             }
 
             var filteredItems = SpawnedSearchBarItems
@@ -624,9 +682,11 @@ namespace Herghys.Utility.Searchbar
 
             return filteredItems;
         }
+
         #endregion
 
         #region Misc Utility
+
         /// <summary>
         /// Get Childs
         /// </summary>
@@ -634,7 +694,8 @@ namespace Herghys.Utility.Searchbar
         /// <param name="includeMe"></param>
         /// <param name="collection"></param>
         /// <param name="condition"></param>
-        private void GetChildRecursive(GameObject obj, bool includeMe, ref HashSet<GameObject> collection, Func<GameObject, bool> condition)
+        private void GetChildRecursive(GameObject obj, bool includeMe, ref HashSet<GameObject> collection,
+            Func<GameObject, bool> condition)
         {
             if (null == obj)
                 return;
@@ -657,9 +718,11 @@ namespace Herghys.Utility.Searchbar
                 GetChildRecursive(child.gameObject, false, ref collection, condition);
             }
         }
+
         #endregion
 
         #region Event Listeners
+
         /// <summary>
         /// On Input selected
         /// </summary>
@@ -668,6 +731,19 @@ namespace Herghys.Utility.Searchbar
         {
             m_cancelButton.gameObject.SetActive(true);
             StartFilter(value, checkEmpty: false, false, true);
+        }
+
+        /// <summary>
+        /// On Input Selected As Toggle
+        /// </summary>
+        /// <param name="active"></param>
+        public void OnSelected(bool active)
+        {
+            m_searchBarScroll.gameObject.SetActive(active);
+            if (!active)
+                return;
+            
+            OnSelected(string.Empty);
         }
 
         /// <summary>
@@ -709,9 +785,17 @@ namespace Herghys.Utility.Searchbar
         {
             StartFilter(value);
         }
+
         #endregion
 
+        public enum SelectionType
+        {
+            Single,
+            Multiple
+        }
+
         #region UNITY EDITOR
+
 #if UNITY_EDITOR
         protected override void OnValidate()
         {
@@ -730,13 +814,14 @@ namespace Herghys.Utility.Searchbar
                 m_searchBarScroll = GetComponentInChildren<ScrollRect>(true);
 
             if (m_searchBarScrollContentHolder is null)
-                m_searchBarScrollContentHolder = m_searchBarScroll.transform.GetChild(0).GetComponentInChildren<VerticalLayoutGroup>(true).transform;
+                m_searchBarScrollContentHolder = m_searchBarScroll.transform.GetChild(0)
+                    .GetComponentInChildren<VerticalLayoutGroup>(true).transform;
 
             if (m_contentVerticalLayoutGroup is null)
                 m_contentVerticalLayoutGroup = m_searchBarScrollContentHolder.GetComponent<VerticalLayoutGroup>();
 
-            if (m_toggleGroup is null)
-                m_toggleGroup = GetComponent<ToggleGroup>();
+            // if (m_childToggleGroup is null)
+            //     m_childToggleGroup = GetComponent<ToggleGroup>();
 
             if (m_searchContentRectTransform is null && m_searchBarScrollContentHolder != null)
                 m_searchContentRectTransform = (RectTransform)m_searchBarScrollContentHolder.transform;
@@ -755,9 +840,10 @@ namespace Herghys.Utility.Searchbar
             m_inputField = GetComponentInChildren<TMP_InputField>();
             m_Placeholder = m_inputField.transform.GetChild(0).Find("Placeholder").GetComponent<TextMeshProUGUI>();
             m_searchBarScroll = GetComponentInChildren<ScrollRect>(true);
-            m_searchBarScrollContentHolder = m_searchBarScroll.transform.GetChild(0).GetComponentInChildren<VerticalLayoutGroup>(true).transform;
+            m_searchBarScrollContentHolder = m_searchBarScroll.transform.GetChild(0)
+                .GetComponentInChildren<VerticalLayoutGroup>(true).transform;
             m_contentVerticalLayoutGroup = m_searchBarScrollContentHolder.GetComponent<VerticalLayoutGroup>();
-            m_toggleGroup = GetComponent<ToggleGroup>();
+            // m_childToggleGroup = GetComponent<ToggleGroup>();
 
             if (m_searchBarScrollContentHolder != null)
                 m_searchContentRectTransform = (RectTransform)m_searchBarScrollContentHolder.transform;
@@ -769,6 +855,7 @@ namespace Herghys.Utility.Searchbar
                 m_cancelButton = m_inputField.GetComponentInChildren<Button>(true);
         }
 #endif
+
         #endregion
     }
 }

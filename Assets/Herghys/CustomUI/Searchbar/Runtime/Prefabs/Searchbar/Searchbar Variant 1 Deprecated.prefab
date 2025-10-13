@@ -7,6 +7,18 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 5009921015013615908, guid: e62c00c233b44844c9892c6b96a5ad32, type: 3}
+      propertyPath: m_text
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5009921015812362819, guid: e62c00c233b44844c9892c6b96a5ad32, type: 3}
+      propertyPath: m_IsOn
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5009921016105046006, guid: e62c00c233b44844c9892c6b96a5ad32, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9145054858784796954, guid: e62c00c233b44844c9892c6b96a5ad32, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -93,7 +105,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9145054858784796955, guid: e62c00c233b44844c9892c6b96a5ad32, type: 3}
       propertyPath: m_Name
-      value: Searchbar
+      value: Searchbar Variant 1
       objectReference: {fileID: 0}
     - target: {fileID: 9145054859021583905, guid: e62c00c233b44844c9892c6b96a5ad32, type: 3}
       propertyPath: m_AnchorMax.y
@@ -110,6 +122,10 @@ PrefabInstance:
     - target: {fileID: 9145054859021583905, guid: e62c00c233b44844c9892c6b96a5ad32, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9145054859325213167, guid: e62c00c233b44844c9892c6b96a5ad32, type: 3}
+      propertyPath: IsAllChildrenSelected
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9145054860357204835, guid: e62c00c233b44844c9892c6b96a5ad32, type: 3}
       propertyPath: m_AnchorMax.y

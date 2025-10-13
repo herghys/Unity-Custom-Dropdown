@@ -900,6 +900,7 @@ GameObject:
   - component: {fileID: 7707372200301459757}
   - component: {fileID: 7707372200301459756}
   - component: {fileID: 7707372200301459761}
+  - component: {fileID: 1002022871739562690}
   m_Layer: 5
   m_Name: ITEM_TEMPLATE
   m_TagString: SearchBar
@@ -992,20 +993,24 @@ MonoBehaviour:
     m_openedSprite: {fileID: 21300000, guid: ecb6fc5839b4dcd4194fa040be898c2b, type: 3}
     m_closedSprite: {fileID: 21300000, guid: 0ad5f2bbeae3a304da4acf4f70587bd5, type: 3}
   m_changeGraphicsOnSelected: 0
-  m_transition: 0
-  m_colorBlock:
-    m_NormalColor: {r: 0, g: 0, b: 0, a: 0}
-    m_HighlightedColor: {r: 0, g: 0, b: 0, a: 0}
-    m_PressedColor: {r: 0, g: 0, b: 0, a: 0}
-    m_SelectedColor: {r: 0, g: 0, b: 0, a: 0}
-    m_DisabledColor: {r: 0, g: 0, b: 0, a: 0}
-    m_ColorMultiplier: 0
-    m_FadeDuration: 0
-  m_spriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
+  m_imageToChangeOnSelect: {fileID: 0}
+  m_selectionGraphicBlock:
+    m_normalColor: {r: 0, g: 0, b: 0, a: 0}
+    m_selectedColor: {r: 0, g: 0, b: 0, a: 0}
+  IsAllChildrenSelected: 0
+--- !u!114 &1002022871739562690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7707372200301459753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fafe2cfe61f6974895a912c3755e8f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AllowSwitchOff: 0
 --- !u!1 &8374532054003122042
 GameObject:
   m_ObjectHideFlags: 0
