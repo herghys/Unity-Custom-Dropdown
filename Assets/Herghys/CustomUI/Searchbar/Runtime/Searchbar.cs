@@ -193,8 +193,11 @@ namespace Herghys.Utility.Searchbar
         /// </summary>
         /// <param name="inputValue"></param>
         /// <param name="checkEmpty"></param>
-        void StartFilter(string inputValue = "", bool checkEmpty = true)
+        void StartFilter(string inputValue = "", bool checkEmpty = true, bool previousValueEqualityCheck = true, bool isInitialCheck = false)
         {
+            if (inputValue.Equals(m_previousValue) && previousValueEqualityCheck)
+                return;
+            
             m_previousValue = string.IsNullOrEmpty(InputValue) ? string.Empty : InputValue;
             InputValue = string.IsNullOrEmpty(inputValue) ? string.Empty : inputValue;
 
@@ -212,7 +215,7 @@ namespace Herghys.Utility.Searchbar
             if (!gameObject.IsFullyActive())
                 return;
 
-            m_filterRoutine = StartCoroutine(FilterItems(checkEmpty = false));
+            m_filterRoutine = StartCoroutine(FilterItems(checkEmpty = false, isInitialCheck));
         }
 
         /// <summary>
@@ -516,7 +519,7 @@ namespace Herghys.Utility.Searchbar
         /// </summary>
         /// <param name="checkEmpty"></param>
         /// <returns></returns>
-        private IEnumerator FilterItems(bool checkEmpty)
+        private IEnumerator FilterItems(bool checkEmpty, bool isInitialCheck = false)
         {
             if (checkEmpty)
             {
@@ -552,13 +555,13 @@ namespace Herghys.Utility.Searchbar
                     {
                         MarkContentContainerToRebuild();
                         parent.ToggleSelectionFromFilter(false);
-                    }
+                    } 
                     yield return null;
                     yield return ResizeScrollRect();
                 }
             }
 
-            if (!m_previousValue.Equals(InputValue))
+            if (!m_previousValue.Equals(InputValue) || (string.IsNullOrEmpty(InputValue) && !isInitialCheck))
             {
                 var exclusions = SpawnedSearchBarItems.Values.Except(filteredItems);
 
@@ -664,7 +667,7 @@ namespace Herghys.Utility.Searchbar
         public void OnSelected(string value)
         {
             m_cancelButton.gameObject.SetActive(true);
-            StartFilter(value, checkEmpty: false);
+            StartFilter(value, checkEmpty: false, false, true);
         }
 
         /// <summary>
