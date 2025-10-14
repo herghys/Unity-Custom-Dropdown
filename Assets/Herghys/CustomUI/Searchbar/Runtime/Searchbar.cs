@@ -65,9 +65,9 @@ namespace Herghys.Utility.Searchbar
         public Dictionary<Guid, SearchbarItem> SpawnedSearchBarItems { get; private set; } = new();
         public string InputValue { get; private set; }
         public bool IsInputEmpty => string.IsNullOrEmpty(InputValue);
-        public IEnumerable<SearchbarItem> SelectedItems;
-        public IEnumerable<SearchbarItem> SelectedParents;
-        public IEnumerable<SearchbarItem> SelectedChildren;
+        public IEnumerable<SearchbarItem> SelectedItems = Array.Empty<SearchbarItem>();
+        public IEnumerable<SearchbarItem> SelectedParents = Array.Empty<SearchbarItem>();
+        public IEnumerable<SearchbarItem> SelectedChildren = Array.Empty<SearchbarItem>();
 
         public IEnumerable<string> SelectedItemsValue
         {
