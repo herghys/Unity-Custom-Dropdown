@@ -118,33 +118,35 @@ namespace Herghys.Utility.Searchbar.Editors
         private void SearchbarItemSettings()
         {
             EditorGUILayout.LabelField("Searchbar Item Settings", EditorStyles.boldLabel);
+            var itemTypeValue = (ItemType)EditorGUILayout.EnumFlagsField(
+                new GUIContent("Item Type"),
+                (ItemType)m_itemType.intValue
+            );
+            
+            if ((int)itemTypeValue == 0)
+                itemTypeValue = ItemType.Parent; // <- Change 'Default' to your intended fallback flag
 
-            var itemTypeValue = (int)(ItemType)EditorGUILayout.EnumFlagsField(
-                new GUIContent("Item Type"), (ItemType)m_itemType.intValue & ~ItemType.None);
+            m_itemType.intValue = (int)itemTypeValue;
+            
+            var toggleSelectionValue = (ToggleSelectionMode)EditorGUILayout.EnumFlagsField(
+                new GUIContent("Selection Mode"),
+                (ToggleSelectionMode)m_toggleSelectionMode.intValue
+            );
+            
+            if ((int)toggleSelectionValue == 0)
+                toggleSelectionValue = ToggleSelectionMode.ShowChild;
 
-            if (itemTypeValue == 0)
-                itemTypeValue = 1;
-
-            m_itemType.intValue = itemTypeValue;
-
-            var toggleSelectionValue = (int)(ToggleSelectionMode)EditorGUILayout.EnumFlagsField(
-                new GUIContent("Selection Mode"), (ToggleSelectionMode)m_toggleSelectionMode.intValue & ~ToggleSelectionMode.None);
-
-            if (toggleSelectionValue == 0)
-                toggleSelectionValue = 1;
-
-            m_toggleSelectionMode.intValue = toggleSelectionValue;
-
-            var enumValue = (ToggleSelectionMode)itemTypeValue;
-            if ((enumValue.HasFlag(ToggleSelectionMode.ShowChild)))
+            m_toggleSelectionMode.intValue = (int)toggleSelectionValue;
+            
+            if (toggleSelectionValue.HasFlag(ToggleSelectionMode.ShowChild))
             {
                 AccordionChecker();
             }
-            
-            CheckGraphics();
-            // if (enumValue.HasFlag(ToggleSelectionMode.SelectItem))
-            // {
-            // }
+
+            if (toggleSelectionValue.HasFlag(ToggleSelectionMode.SelectItem))
+            {
+                CheckGraphics();
+            }
         }
 
         private void BaseProperty()
