@@ -15,11 +15,12 @@ namespace Herghys.Utility.Searchbar
     [RequireComponent(typeof(ToggleGroup))]
     public class Searchbar : Selectable
     {
-        [Header("Inputs")]
-        [SerializeField] private TMP_InputField m_inputField;
-        [SerializeField] private Toggle m_inputToggle;
-        [SerializeField] private TextMeshProUGUI m_Placeholder;
-        [SerializeField] private TextMeshProUGUI m_inputToggleText;
+        [Header("Inputs")] 
+        [SerializeField] private InputType m_inputType;
+        [SerializeField, ShowIf("m_inputType", InputType.InputField)] private TMP_InputField m_inputField;
+        [SerializeField, ShowIf("m_inputType", InputType.InputField)] private TextMeshProUGUI m_Placeholder;
+        [SerializeField, ShowIf("m_inputType", InputType.Toggle)] private Toggle m_inputToggle;
+        [SerializeField, ShowIf("m_inputType", InputType.Toggle)] private TextMeshProUGUI m_inputToggleText;
 
         [Header("UI Reference")] [SerializeField]
         private ScrollRect m_searchBarScroll;
@@ -110,19 +111,61 @@ namespace Herghys.Utility.Searchbar
         {
             base.OnEnable();
             m_searchBarScroll.gameObject.SetActive(false);
-            m_inputToggle.onValueChanged.AddListener(OnSelected);
-            m_inputField.onValueChanged.AddListener(OnInputValueChanged);
-            m_inputField.onEndEdit.AddListener(OnInputValueEndEdit);
-            m_inputField.onSelect.AddListener(OnSelected);
+            switch (m_inputType)
+            {
+                case InputType.InputField:
+                    RegisterInputField();
+                    break;
+                case InputType.Toggle:
+                    RegisterToggle();
+                    break;
+            }
         }
 
         protected override void OnDisable()
         {
+            switch (m_inputType)
+            {
+                case InputType.InputField:
+                    UnregisterInputField();
+                    break;
+                case InputType.Toggle:
+                    UnregisterToggle();
+                    break;
+            }
             base.OnDisable();
-            m_inputToggle.onValueChanged.RemoveListener(OnSelected);
+           
+        }
+
+        protected virtual void RegisterInputField()
+        {
+            m_inputToggle.gameObject.SetActive(false);
+            m_inputField.gameObject.SetActive(true);
+            
+            m_inputField.onValueChanged?.AddListener(OnInputValueChanged);
+            m_inputField.onEndEdit?.AddListener(OnInputValueEndEdit);
+            m_inputField.onSelect?.AddListener(OnSelected);
+
+        }
+        
+        protected virtual void UnregisterInputField()
+        {
             m_inputField.onValueChanged.RemoveListener(OnInputValueChanged);
             m_inputField.onEndEdit.RemoveListener(OnInputValueEndEdit);
             m_inputField.onSelect.RemoveListener(OnSelected);
+        }
+        
+        protected virtual void RegisterToggle()
+        {
+            m_inputField.gameObject.SetActive(false);
+            m_inputToggle.gameObject.SetActive(true);
+
+            m_inputToggle.onValueChanged.AddListener(OnSelected);
+        }
+        
+        protected virtual void UnregisterToggle()
+        {
+            m_inputToggle.onValueChanged.RemoveListener(OnSelected);
         }
 
         #endregion
@@ -409,8 +452,7 @@ namespace Herghys.Utility.Searchbar
                 BuildPlaceholderCaption();
             }
 
-            m_Placeholder.text = m_captionBuilder.ToString().TrimEnd();
-            m_inputToggleText.text = m_captionBuilder.ToString().TrimEnd();
+            SetPlaceholderLabel(m_captionBuilder.ToString().TrimEnd());
         }
 
         /// <summary>
@@ -420,7 +462,8 @@ namespace Herghys.Utility.Searchbar
         {
             m_captionBuilder.Clear();
             m_captionBuilder.Append(m_defaultCaption);
-            m_Placeholder.text = m_captionBuilder.ToString().TrimEnd();
+            
+            SetPlaceholderLabel(m_captionBuilder.ToString().TrimEnd());
         }
 
         /// <summary>
@@ -476,6 +519,16 @@ namespace Herghys.Utility.Searchbar
             }
         }
 
+        private void SetPlaceholderLabel(string text)
+        {
+            if (m_Placeholder)
+                m_Placeholder.text = m_captionBuilder.ToString().TrimEnd();
+            
+            if (m_inputToggleText)
+                m_inputToggleText.text = m_captionBuilder.ToString().TrimEnd();
+        }
+        
+        
         /// <summary>
         /// Mark content container for rebuikd
         /// </summary>
@@ -857,5 +910,10 @@ namespace Herghys.Utility.Searchbar
 #endif
 
         #endregion
+    }
+    
+    public enum InputType
+    {
+        InputField, Toggle
     }
 }

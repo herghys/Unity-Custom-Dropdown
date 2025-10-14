@@ -396,9 +396,10 @@ namespace Herghys.Utility.Searchbar
     [Flags]
     public enum ToggleSelectionMode
     {
-        None = 0,
-        ShowChild = 1 << 0,   // 0001
-        SelectItem = 2 << 0, // 0010
+        None        = 0,
+        ShowChild   = 1 << 0, // 1
+        SelectItem  = 1 << 1, // 2
+        Everything         = ShowChild | SelectItem // 3
     }
 
     [Flags]
