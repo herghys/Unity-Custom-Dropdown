@@ -1,0 +1,16 @@
+{
+    "name": "Herghys.CustomUI.CustomDropdown.Samples",
+    "rootNamespace": "Herghys.CustomUI.CustomDropdown.Samples",
+    "references": [
+        "GUID:b7f082433ba15b14785ee1036948494c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

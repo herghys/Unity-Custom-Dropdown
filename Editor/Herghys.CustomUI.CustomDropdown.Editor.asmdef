@@ -1,0 +1,18 @@
+{
+    "name": "Herghys.CustomUI.CustomDropdown.Editor",
+    "rootNamespace": "Herghys.CustomUI.CustomDropdown.Editor",
+    "references": [
+        "GUID:b7f082433ba15b14785ee1036948494c"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
