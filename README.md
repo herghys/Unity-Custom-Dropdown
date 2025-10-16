@@ -2,7 +2,11 @@
 This project was originally made for work but decided to make it as an external Extension. Custom dropdown that supports parent with childs option data and search function
 
 ## Installation
+### UnityPackage
 You can download the unity package from the release page
+
+### UPM Package
+You can download via upm `https://github.com/herghys/Unity-Custom-Dropdown.git`
 
 ## Usage
 1. Put the Dropdown into canvas from prefab. Prefab located in Samples
