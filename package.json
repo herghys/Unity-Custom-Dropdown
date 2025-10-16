@@ -2,7 +2,7 @@
     "name": "com.herghys.customdropdown",
     "displayName": "Custom Dropdown",
     "version": "1.3.0",
-    "unity": "2020.1.20f1",
+    "unity": "2020.1",
     "unityRelease": "0a10",
     "description": "Custom Dropdown UI for Runtime",
     "keywords": [
